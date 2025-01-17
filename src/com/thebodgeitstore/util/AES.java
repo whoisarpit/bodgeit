@@ -44,13 +44,32 @@ import javax.crypto.spec.SecretKeySpec;
            return byteArrayToHexString(key.getEncoded());
        }
        
-       public void setCrtKey(String keyText) throws InvalidKeyException, IllegalBlockSizeException, BadPaddingException, NoSuchAlgorithmException, NoSuchPaddingException{
-           byte[] bText = keyText.getBytes();
-           SecretKey secretKey = new SecretKeySpec(bText, "AES");
-           Cipher c2 = Cipher.getInstance("AES/ECB/NoPadding");
-           c2.init(Cipher.ENCRYPT_MODE, secretKey);
-           bText = c2.doFinal(bText);
-           key = new SecretKeySpec(bText, "AES");
+       public void setCrtKey(String keyText) throws InvalidKeyException, IllegalBlockSizeException, BadPaddingException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidAlgorithmParameterException {
+           // Convert keyText to bytes
+           byte[] bText = keyText.getBytes(StandardCharsets.UTF_8);
+       
+           // Ensure key length is 32 bytes for AES-256
+           if (bText.length < 32) {
+               throw new IllegalArgumentException("Key length must be 32 bytes for AES-256");
+           }
+           byte[] keyBytes = Arrays.copyOf(bText, 32);
+           SecretKey secretKey = new SecretKeySpec(keyBytes, "AES");
+       
+           // Generate a secure random nonce
+           byte[] nonce = new byte[12]; // 12 bytes for GCM
+           SecureRandom random = SecureRandom.getInstanceStrong();
+           random.nextBytes(nonce);
+       
+           // Use AES/GCM/NoPadding for encryption with integrity
+           Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+           GCMParameterSpec gcmSpec = new GCMParameterSpec(128, nonce); // 128 bit authentication tag
+           cipher.init(Cipher.ENCRYPT_MODE, secretKey, gcmSpec);
+       
+           // Encrypt the text
+           byte[] encryptedText = cipher.doFinal(bText);
+       
+           // Create new key from encrypted text
+           key = new SecretKeySpec(encryptedText, "AES");
        }
        
        public void setStringToKey(String keyText) throws NoSuchAlgorithmException, UnsupportedEncodingException{
